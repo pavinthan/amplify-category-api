@@ -1,4 +1,4 @@
-import { MappingTemplate, getModelDataSourceNameForTypeName, getKeySchema, getTable } from '@aws-amplify/graphql-transformer-core';
+import { MappingTemplate, getModelDataSourceNameForTypeName, getKeySchema, getTable, getPrimaryKeyFields } from '@aws-amplify/graphql-transformer-core';
 import { TransformerContextProvider } from '@aws-amplify/graphql-transformer-interfaces';
 import {
   DynamoDBMappingTemplate,
@@ -89,18 +89,20 @@ export class DDBRelationalResolverGenerator extends RelationalResolverGenerator 
    * @param ctx The transformer context provider.
    */
   makeHasManyGetItemsConnectionWithKeyResolver = (config: HasManyDirectiveConfiguration, ctx: TransformerContextProvider): void => {
-    const { connectionFields, field, fields, indexName, limit, object, relatedType } = config;
-    const connectionAttributes: string[] = fields.length > 0 ? fields : connectionFields;
+    const { connectionFields, field, references, indexName, limit, object, relatedType } = config;
+    const connectionAttributes: string[] = references.length > 0 ? references : connectionFields;
+    const primaryKeys: string[] = getPrimaryKeyFields(object);
     if (connectionAttributes.length === 0) {
       throw new Error('Either connection fields or local fields should be populated.');
     }
+
     const table = getTable(ctx, relatedType);
     const dataSourceName = getModelDataSourceNameForTypeName(ctx, relatedType.name.value);
     const dataSource = ctx.api.host.getDataSource(dataSourceName);
     const keySchema = getKeySchema(table, indexName);
     const setup: Expression[] = [
       set(ref('limit'), ref(`util.defaultIfNull($context.args.limit, ${limit})`)),
-      ...connectionAttributes
+      ...primaryKeys
         .slice(1)
         .map((ca, idx) =>
           set(
@@ -188,8 +190,8 @@ export class DDBRelationalResolverGenerator extends RelationalResolverGenerator 
               ref(PARTITION_KEY_VALUE),
               methodCall(
                 ref('util.defaultIfNull'),
-                ref(`ctx.stash.connectionAttributes.get("${connectionAttributes[0]}")`),
-                ref(`ctx.source.${connectionAttributes[0]}`),
+                ref(`ctx.stash.connectionAttributes.get("${primaryKeys[0]}")`),
+                ref(`ctx.source.${primaryKeys[0]}`),
               ),
             ),
             ifElse(
@@ -225,11 +227,11 @@ export class DDBRelationalResolverGenerator extends RelationalResolverGenerator 
     config: HasOneDirectiveConfiguration | BelongsToDirectiveConfiguration,
     ctx: TransformerContextProvider,
   ): void => {
-    const { connectionFields, field, fields, object, relatedType, relatedTypeIndex } = config;
+    const { connectionFields, field, references, object, relatedType, relatedTypeIndex } = config;
     if (relatedTypeIndex.length === 0) {
       throw new Error('Expected relatedType index fields to be set for connection.');
     }
-    const localFields = fields.length > 0 ? fields : connectionFields;
+    const localFields = references.length > 0 ? references : connectionFields;
     const table = getTable(ctx, relatedType);
     const { keySchema } = table as any;
     const dataSourceName = getModelDataSourceNameForTypeName(ctx, relatedType.name.value);

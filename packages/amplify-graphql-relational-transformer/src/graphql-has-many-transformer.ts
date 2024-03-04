@@ -143,8 +143,8 @@ export class HasManyTransformer extends TransformerPluginBase {
   prepare = (context: TransformerPrepareStepContextProvider): void => {
     this.directiveList.forEach((config) => {
       const modelName = config.object.name.value;
+      setFieldMappingResolverReference(context, config.relatedType?.name?.value, modelName, config.field.name.value, true);
       if (isSqlModel(context as TransformerContextProvider, modelName)) {
-        setFieldMappingResolverReference(context, config.relatedType?.name?.value, modelName, config.field.name.value, true);
         return;
       }
       registerHasManyForeignKeyMappings({
@@ -162,11 +162,7 @@ export class HasManyTransformer extends TransformerPluginBase {
 
     for (const config of this.directiveList) {
       const dbType = getStrategyDbTypeFromTypeNode(config.field.type, context);
-      if (dbType === DDB_DB_TYPE) {
-        config.relatedTypeIndex = getRelatedTypeIndex(config, context, config.indexName);
-      } else if (isSqlDbType(dbType)) {
-        validateParentReferencesFields(config, context);
-      }
+      validateParentReferencesFields(config, context);
       ensureHasManyConnectionField(config, context);
       extendTypeWithConnection(config, context);
     }
@@ -200,15 +196,8 @@ const validate = (config: HasManyDirectiveConfiguration, ctx: TransformerContext
   const dbType = getStrategyDbTypeFromTypeNode(field.type, ctx);
   config.relatedType = getRelatedType(config, ctx);
 
-  if (dbType === DDB_DB_TYPE) {
-    ensureFieldsArray(config);
-    config.fieldNodes = getFieldsNodes(config, ctx);
-  }
-
-  if (isSqlDbType(dbType)) {
     ensureReferencesArray(config);
     getReferencesNodes(config, ctx);
-  }
 
   validateModelDirective(config);
 

@@ -1,5 +1,5 @@
 import { attributeTypeFromType, overrideIndexAtCfnLevel } from '@aws-amplify/graphql-index-transformer';
-import { getTable } from '@aws-amplify/graphql-transformer-core';
+import { getTable, isSqlDbType } from '@aws-amplify/graphql-transformer-core';
 import { TransformerContextProvider, TransformerPrepareStepContextProvider } from '@aws-amplify/graphql-transformer-interfaces';
 import * as cdk from 'aws-cdk-lib';
 import { FieldDefinitionNode, ObjectTypeDefinitionNode } from 'graphql';
@@ -12,10 +12,10 @@ import { getConnectionAttributeName, getObjectPrimaryKey } from './utils';
  * adds GSI to the table if it doesn't already exists for connection
  */
 export const updateTableForConnection = (config: HasManyDirectiveConfiguration, ctx: TransformerContextProvider): void => {
-  const { fields, indexName: incomingIndexName } = config;
+  const { references, indexName: incomingIndexName } = config;
 
   // If an index name or list of fields was specified, then we don't need to create a GSI here.
-  if (incomingIndexName || fields.length > 0) {
+  if (incomingIndexName) {
     return;
   }
 
@@ -33,12 +33,9 @@ export const updateTableForConnection = (config: HasManyDirectiveConfiguration, 
   }
 
   const respectPrimaryKeyAttributesOnConnectionField: boolean = ctx.transformParameters.respectPrimaryKeyAttributesOnConnectionField;
-  const partitionKeyName = getConnectionAttributeName(
-    ctx.transformParameters,
-    mappedObjectName,
-    field.name.value,
-    getObjectPrimaryKey(object).name.value,
-  );
+
+  const partitionKeyName = references[0];
+
   const partitionKeyType = respectPrimaryKeyAttributesOnConnectionField
     ? attributeTypeFromType(getObjectPrimaryKey(object).type, ctx)
     : 'S';

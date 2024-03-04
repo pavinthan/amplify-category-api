@@ -163,11 +163,7 @@ export class BelongsToTransformer extends TransformerPluginBase {
 
     for (const config of this.directiveList) {
       const dbType = getStrategyDbTypeFromTypeNode(config.field.type, context);
-      if (dbType === DDB_DB_TYPE) {
-        config.relatedTypeIndex = getRelatedTypeIndex(config, context);
-      } else if (isSqlDbType(dbType)) {
         validateChildReferencesFields(config, context);
-      }
       ensureBelongsToConnectionField(config, context);
     }
   };
@@ -201,8 +197,8 @@ const validate = (config: BelongsToDirectiveConfiguration, ctx: TransformerConte
 
   config.relatedType = getRelatedType(config, ctx);
   if (dbType === DDB_DB_TYPE) {
-    ensureFieldsArray(config);
-    config.fieldNodes = getFieldsNodes(config, ctx);
+    ensureReferencesArray(config);
+    getBelongsToReferencesNodes(config, ctx);
   }
 
   if (isSqlDbType(dbType)) {
@@ -244,10 +240,6 @@ const validate = (config: BelongsToDirectiveConfiguration, ctx: TransformerConte
 const setFieldMappingReferences = (context: TransformerPrepareStepContextProvider, directiveList: BelongsToDirectiveConfiguration[]) => {
   directiveList.forEach((config) => {
     const modelName = config.object.name.value;
-    const areFieldMappingsSupported = isSqlModel(context as TransformerContextProvider, modelName);
-    if (!areFieldMappingsSupported) {
-      return;
-    }
     setFieldMappingResolverReference(context, config.relatedType?.name?.value, modelName, config.field.name.value);
   });
 };
