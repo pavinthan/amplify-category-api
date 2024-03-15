@@ -8,7 +8,9 @@ import { DataSourceBasedDirectiveTransformer } from '../data-source-based-direct
 import { getGenerator } from '../resolver/generator-factory';
 import { updateTableForConnection } from '../resolvers';
 import { HasManyDirectiveConfiguration } from '../types';
-import { ensureFieldsArray, getFieldsNodes, getRelatedTypeIndex, registerHasManyForeignKeyMappings } from '../utils';
+import { registerHasManyForeignKeyMappings, getRelatedTypeIndex, ensureFieldsArray, getFieldsNodes } from '../utils';
+import { DataSourceBasedDirectiveTransformer } from '../data-source-based-directive-transformer';
+import { getGenerator } from '../resolver/generator-factory';
 
 /**
  * HasManyDirectiveDDBFieldsTransformer executes transformations based on `@hasMany(fields: [String!])` configurations
