@@ -2,15 +2,13 @@ import { MYSQL_DB_TYPE, POSTGRES_DB_TYPE } from '@aws-amplify/graphql-transforme
 import {
   TransformerContextProvider,
   TransformerPrepareStepContextProvider,
-  TransformerTransformSchemaStepContextProvider,
+  TransformerTransformSchemaStepContextProvider
 } from '@aws-amplify/graphql-transformer-interfaces';
 import { DataSourceBasedDirectiveTransformer } from '../data-source-based-directive-transformer';
 import { getGenerator } from '../resolver/generator-factory';
 import { setFieldMappingResolverReference } from '../resolvers';
 import { HasManyDirectiveConfiguration } from '../types';
-import { validateParentReferencesFields, ensureReferencesArray, getReferencesNodes } from '../utils';
-import { DataSourceBasedDirectiveTransformer } from '../data-source-based-directive-transformer';
-import { getGenerator } from '../resolver/generator-factory';
+import { ensureReferencesArray, getReferencesNodes, validateParentReferencesFields } from '../utils';
 
 /**
  * HasManyDirectiveSQLTransformer executes transformations based on `@hasMany(references: [String!])` configurations
