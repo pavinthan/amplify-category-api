@@ -1,16 +1,11 @@
 import { IndexTransformer, PrimaryKeyTransformer } from '@aws-amplify/graphql-index-transformer';
 import { ModelTransformer } from '@aws-amplify/graphql-model-transformer';
 import {
-  ConflictHandlerType,
-  DDB_DEFAULT_DATASOURCE_STRATEGY,
-  GraphQLTransform,
-  constructDataSourceStrategies,
-  validateModelSchema,
+  ConflictHandlerType, validateModelSchema
 } from '@aws-amplify/graphql-transformer-core';
 import { Kind, parse } from 'graphql';
-import { mockSqlDataSourceStrategy, testTransform } from '@aws-amplify/graphql-transformer-test-utils';
+import { testTransform } from '@aws-amplify/graphql-transformer-test-utils';
 import { BelongsToTransformer, HasManyTransformer, HasOneTransformer } from '..';
-import { hasGeneratedField } from './test-helpers';
 
 test('has many query', () => {
   const inputSchema = `
@@ -101,10 +96,5 @@ test('many to many query', () => {
   expect(out).toBeDefined();
   const schema = parse(out.schema);
   validateModelSchema(schema);
-<<<<<<< HEAD
   expect(out.schema).toMatchSnapshot();
 });
-=======
-  expect(schema).toMatchSnapshot();
-});
->>>>>>> a57f30c98 (add has-many references test suite)
