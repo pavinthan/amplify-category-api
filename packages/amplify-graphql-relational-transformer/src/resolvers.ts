@@ -5,7 +5,7 @@ import * as cdk from 'aws-cdk-lib';
 import { FieldDefinitionNode, ObjectTypeDefinitionNode } from 'graphql';
 import { ModelResourceIDs, ResourceConstants } from 'graphql-transformer-common';
 import { getSortKeyFields } from './schema';
-import { HasManyDirectiveConfiguration } from './types';
+import { HasManyDirectiveConfiguration, HasOneDirectiveConfiguration } from './types';
 import { getConnectionAttributeName, getObjectPrimaryKey } from './utils';
 
 /**
@@ -21,7 +21,7 @@ import { getConnectionAttributeName, getObjectPrimaryKey } from './utils';
  * @param ctx The `TransformerContextProvider` for DDB references.
  */
 export const updateTableForReferencesConnection = (
-  config: HasManyDirectiveConfiguration, // TODO: Add support for HasOneDirectiveConfiguration
+  config: HasManyDirectiveConfiguration | HasOneDirectiveConfiguration,
   ctx: TransformerContextProvider,
 ): void => {
   const { field, referenceNodes, indexName: incomingIndexName, object, references, relatedType } = config;

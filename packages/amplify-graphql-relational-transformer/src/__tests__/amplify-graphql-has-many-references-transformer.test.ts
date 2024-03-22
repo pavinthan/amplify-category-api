@@ -152,19 +152,6 @@ test('fails if hasMany related type is not an array', () => {
   ).toThrowError(); // TODO: Error message
 });
 
-/*
-    type Team @model {
-      id: ID!
-      name: String!
-      members: Member @hasMany(references: ["teamID"])
-    }
-    type Member @model {
-      id: ID!
-      teamID: String
-      team: Team @belongsTo(fields: ["teamID"])
-    }`
- */
-
 test('fails if uni-directional hasMany', () => {
   const inputSchema = `
     type Team @model {
@@ -183,7 +170,29 @@ test('fails if uni-directional hasMany', () => {
       schema: inputSchema,
       transformers: [new ModelTransformer(), new HasManyTransformer(), new BelongsToTransformer()],
     }),
-  ).toThrowError('foo'); // TODO: This should fail -- find appropriate place to validate.
+  ).toThrowError('_'); // TODO: This should fail -- find appropriate place to validate.
+});
+
+
+test('fails if bi-directional inconsistent fields / references', () => {
+  const inputSchema = `
+    type Team @model {
+      id: ID!
+      name: String!
+      members: Member @hasMany(references: ["teamID"])
+    }
+    type Member @model {
+      id: ID!
+      teamID: String
+      team: Team @belongsTo(fields: ["teamID"])
+    }`;
+
+  expect(() =>
+    testTransform({
+      schema: inputSchema,
+      transformers: [new ModelTransformer(), new HasManyTransformer(), new BelongsToTransformer()],
+    }),
+  ).toThrowError(); // TODO: This should fail -- find appropriate place to validate.
 });
 
 test('many to many query', () => {
