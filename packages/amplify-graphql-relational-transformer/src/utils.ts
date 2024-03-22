@@ -75,7 +75,7 @@ export const validateChildReferencesFields = (config: BelongsToDirectiveConfigur
 };
 
 export const getRelatedTypeIndex = (
-  config: HasOneDirectiveConfiguration,
+  config: HasOneDirectiveConfiguration | BelongsToDirectiveConfiguration,
   ctx: TransformerContextProvider,
   indexName?: string,
 ): FieldDefinitionNode[] => {
