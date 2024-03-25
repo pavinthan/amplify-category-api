@@ -1,13 +1,14 @@
+import { DDB_DB_TYPE } from '@aws-amplify/graphql-transformer-core';
 import {
-    TransformerContextProvider,
-    TransformerPrepareStepContextProvider,
-    TransformerTransformSchemaStepContextProvider,
-  } from '@aws-amplify/graphql-transformer-interfaces';
-  import { HasOneDirectiveConfiguration } from '../types';
-  import { getRelatedTypeIndex, ensureFieldsArray, getFieldsNodes, registerHasOneForeignKeyMappings, ensureReferencesArray, getReferencesNodes, validateParentReferencesFields } from '../utils';
-  import { DataSourceBasedDirectiveTransformer } from '../data-source-based-directive-transformer';
-import { setFieldMappingResolverReference, updateTableForReferencesConnection } from '../resolvers';
+  TransformerContextProvider,
+  TransformerPrepareStepContextProvider,
+  TransformerTransformSchemaStepContextProvider,
+} from '@aws-amplify/graphql-transformer-interfaces';
+import { DataSourceBasedDirectiveTransformer } from '../data-source-based-directive-transformer';
 import { DDBRelationalReferencesResolverGenerator } from '../resolver/ddb-references-generator';
+import { setFieldMappingResolverReference, updateTableForReferencesConnection } from '../resolvers';
+import { HasOneDirectiveConfiguration } from '../types';
+import { ensureReferencesArray, getReferencesNodes, registerHasOneForeignKeyMappings, validateParentReferencesFields } from '../utils';
 
   /**
    * HasOneDirectiveDDBFieldsTransformer executes transformations based on `@hasOne(references: [String!])` configurations
@@ -16,10 +17,7 @@ import { DDBRelationalReferencesResolverGenerator } from '../resolver/ddb-refere
    * This should not be used for `@hasOne(fields: [String!])` definitions.
    */
   export class HasOneDirectiveDDBReferencesTransformer implements DataSourceBasedDirectiveTransformer<HasOneDirectiveConfiguration> {
-    dbType: 'DYNAMODB';
-    constructor(dbType: 'DYNAMODB') {
-      this.dbType = dbType;
-    }
+    dbType = DDB_DB_TYPE;
 
     prepare = (context: TransformerPrepareStepContextProvider, config: HasOneDirectiveConfiguration): void => {
       const modelName = config.object.name.value;
@@ -44,6 +42,6 @@ import { DDBRelationalReferencesResolverGenerator } from '../resolver/ddb-refere
 
     validate = (context: TransformerContextProvider, config: HasOneDirectiveConfiguration): void => {
         ensureReferencesArray(config);
-        config.fieldNodes = getReferencesNodes(config, context);
+        config.referenceNodes = getReferencesNodes(config, context);
     };
   }

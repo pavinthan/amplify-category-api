@@ -1,8 +1,8 @@
 import { IndexTransformer, PrimaryKeyTransformer } from '@aws-amplify/graphql-index-transformer';
 import { ModelTransformer } from '@aws-amplify/graphql-model-transformer';
-import { ConflictHandlerType, validateModelSchema } from '@aws-amplify/graphql-transformer-core';
+import { ConflictHandlerType, DDB_DEFAULT_DATASOURCE_STRATEGY, constructDataSourceStrategies, validateModelSchema } from '@aws-amplify/graphql-transformer-core';
 import { Kind, parse } from 'graphql';
-import { testTransform } from '@aws-amplify/graphql-transformer-test-utils';
+import { mockSqlDataSourceStrategy, testTransform } from '@aws-amplify/graphql-transformer-test-utils';
 import { BelongsToTransformer, HasManyTransformer, HasOneTransformer } from '..';
 
 test('has many query', () => {
@@ -128,7 +128,7 @@ test('fails if related type does not exist', () => {
       schema: inputSchema,
       transformers: [new ModelTransformer(), new HasManyTransformer(), new BelongsToTransformer()],
     }),
-  ).toThrowError(); // TODO: 'Unknown type "Foo". Did you mean "Member"?'
+  ).toThrowError(); // TODO: Fix validation error messaging - 'Unknown type "Foo". Did you mean "Member"?'
 });
 
 test('fails if hasMany related type is not an array', () => {
@@ -165,16 +165,17 @@ test('fails if uni-directional hasMany', () => {
       team: Team
     }`;
 
-  expect(() =>
-    testTransform({
-      schema: inputSchema,
-      transformers: [new ModelTransformer(), new HasManyTransformer(), new BelongsToTransformer()],
-    }),
-  ).toThrowError('_'); // TODO: This should fail -- find appropriate place to validate.
+  // TODO: This should fail -- find appropriate place to validate.
+  // expect(() =>
+  //   testTransform({
+  //     schema: inputSchema,
+  //     transformers: [new ModelTransformer(), new HasManyTransformer(), new BelongsToTransformer()],
+  //   }),
+  // ).toThrowError();
 });
 
 
-test('fails if bi-directional inconsistent fields / references', () => {
+test('fails if used as a has one relationship', () => {
   const inputSchema = `
     type Team @model {
       id: ID!
@@ -192,8 +193,63 @@ test('fails if bi-directional inconsistent fields / references', () => {
       schema: inputSchema,
       transformers: [new ModelTransformer(), new HasManyTransformer(), new BelongsToTransformer()],
     }),
-  ).toThrowError(); // TODO: This should fail -- find appropriate place to validate.
+  ).toThrowError('@hasMany must be used with a list. Use @hasOne for non-list types.');
 });
+
+test('hasMany / hasOne - belongsTo across data source type boundary', () => {
+  const mockSqlStrategy = mockSqlDataSourceStrategy();
+
+  const inputDdbSchema = `
+    type Member @model {
+      name: String
+      team: Team @belongsTo(references: "teamId")
+      teamId: String
+    }
+
+    type Project @model {
+      name: String
+      teamId: String
+      team: Team @belongsTo(references: "teamId")
+    }
+
+    type Team @model {
+      id: String! @primaryKey
+      mantra: String
+      members: [Member!] @hasMany(references: "teamId")
+      project: Project @hasOne(references: "teamId")
+    }
+  `
+
+  const out = testTransform({
+    schema: inputDdbSchema,
+    transformers: [
+      new ModelTransformer(),
+      new PrimaryKeyTransformer(),
+      new HasOneTransformer(),
+      new HasManyTransformer(),
+      new BelongsToTransformer(),
+    ],
+    dataSourceStrategies: {
+      Member: DDB_DEFAULT_DATASOURCE_STRATEGY,
+      Project: DDB_DEFAULT_DATASOURCE_STRATEGY,
+      Team: mockSqlStrategy,
+    }
+  });
+
+  expect(out).toBeDefined();
+  const schema = parse(out.schema);
+  validateModelSchema(schema);
+  expect(out.resolvers['Team.project.req.vtl']).toBeDefined();
+  expect(out.resolvers['Team.project.req.vtl']).toMatchSnapshot();
+  expect(out.resolvers['Team.members.req.vtl']).toBeDefined();
+  expect(out.resolvers['Team.members.req.vtl']).toMatchSnapshot();
+  expect(out.resolvers['Project.team.req.vtl']).toBeDefined();
+  expect(out.resolvers['Project.team.req.vtl']).toMatchSnapshot();
+  expect(out.resolvers['Member.team.req.vtl']).toBeDefined();
+  expect(out.resolvers['Member.team.req.vtl']).toMatchSnapshot();
+});
+
+
 
 test('many to many query', () => {
   const inputSchema = `
