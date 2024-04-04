@@ -1,20 +1,19 @@
 /* eslint-disable no-param-reassign */
 import {
   DirectiveWrapper,
-  generateGetArgumentsInput,
-  getStrategyDbTypeFromTypeNode,
-  getStrategyDbTypeFromModel,
   InvalidDirectiveError,
   TransformerPluginBase,
+  generateGetArgumentsInput,
+  getStrategyDbTypeFromModel,
+  getStrategyDbTypeFromTypeNode,
 } from '@aws-amplify/graphql-transformer-core';
 import {
   TransformerContextProvider,
+  TransformerPreProcessContextProvider,
   TransformerPrepareStepContextProvider,
   TransformerSchemaVisitStepContextProvider,
   TransformerTransformSchemaStepContextProvider,
-  TransformerPreProcessContextProvider,
 } from '@aws-amplify/graphql-transformer-interfaces';
-import { getBaseType, isListType, isNonNullType, makeField, makeNamedType, makeNonNullType } from 'graphql-transformer-common';
 import {
   DirectiveNode,
   DocumentNode,
@@ -23,8 +22,10 @@ import {
   ObjectTypeDefinitionNode,
   ObjectTypeExtensionNode,
 } from 'graphql';
+import { getBaseType, isListType, isNonNullType, makeField, makeNamedType, makeNonNullType } from 'graphql-transformer-common';
 import produce from 'immer';
 import { WritableDraft } from 'immer/dist/types/types-external';
+import { getHasManyDirectiveTransformer } from './has-many/has-many-directive-transformer-factory';
 import {
   addFieldsToDefinition,
   convertSortKeyFieldsToSortKeyConnectionFields,
@@ -41,8 +42,6 @@ import {
   validateModelDirective,
   validateRelatedModelDirective,
 } from './utils';
-import { getGenerator } from './resolver/generator-factory';
-import { getHasManyDirectiveTransformer } from './has-many/has-many-directive-transformer-factory';
 
 const directiveName = 'hasMany';
 const defaultLimit = 100;
